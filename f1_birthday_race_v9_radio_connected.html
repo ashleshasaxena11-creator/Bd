@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#030303">
+<title>15.08 // Classified</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#020202;color:#fff}
+body{font-family:Arial,Helvetica,sans-serif;touch-action:manipulation}
+button{font:inherit}.app{height:100svh;position:relative;overflow:hidden;background:#030303}
+.noise{position:absolute;inset:0;z-index:30;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .8s}
+.scene.active{opacity:1;visibility:visible}
+.s1{display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#240000 0,#070707 28%,#020202 72%)}
+.eyebrow{font-size:10px;letter-spacing:.55em;color:#888;text-align:center}
+.big{font-size:clamp(44px,14vw,82px);line-height:.85;font-weight:900;font-style:italic;letter-spacing:-.06em;text-align:center;margin:18px 0}
+.big span{color:#e10600}
+.sub{text-align:center;color:#777;font-size:10px;letter-spacing:.35em}
+.tap{margin:38px auto 0;display:block;border:1px solid #e10600;background:#e10600;color:white;padding:15px 26px;border-radius:2px;font-size:11px;font-weight:900;letter-spacing:.25em}
+.corner{position:absolute;left:20px;right:20px;display:flex;justify-content:space-between;font-size:9px;letter-spacing:.3em;color:#555}.top{top:28px}.bottom{bottom:25px}
+
+/* lights-out scene */
+.s2{
+  background:
+    radial-gradient(circle at 50% 28%,rgba(225,6,0,.10),transparent 30%),
+    linear-gradient(#030303 0 58%,#090909 58%);
+  overflow:hidden
+}
+.hud{position:absolute;top:max(20px,env(safe-area-inset-top));left:18px;right:18px;display:flex;justify-content:space-between;z-index:8;font-size:9px;letter-spacing:.28em;color:#777}
+.hud b{color:#e10600}
+.startlights{
+  position:absolute;top:13%;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:12
+}
+.light{width:34px;height:34px;border-radius:50%;background:#180000;border:2px solid #401010;box-shadow:inset 0 0 8px #000}
+.light.on{background:#f20b0b;box-shadow:0 0 22px #e10600,inset 0 0 9px #fff}
+.s2title{
+  position:absolute;top:24%;left:0;right:0;text-align:center;
+  font-size:11px;letter-spacing:.38em;font-weight:800;z-index:11
+}
+.s2title span{color:#e10600}
+.trackwrap{position:absolute;left:-12%;right:-12%;bottom:-8%;height:47%;transform:perspective(450px) rotateX(32deg);transform-origin:bottom}
+.track{position:absolute;inset:0;background:#111;clip-path:polygon(0 32%,100% 0,100% 77%,0 100%);box-shadow:inset 0 0 50px #000}
+.track:before{content:"";position:absolute;inset:4% 0;background:repeating-linear-gradient(90deg,transparent 0 44px,#eee 45px 52px,#e10600 53px 60px,transparent 61px 90px);opacity:.8;clip-path:polygon(0 30%,100% 0,100% 6%,0 36%,0 64%,100% 34%,100% 40%,0 70%)}
+.track:after{content:"";position:absolute;left:0;right:0;top:43%;height:4px;background:repeating-linear-gradient(90deg,#eee 0 25px,transparent 25px 55px);opacity:.45}
+.car{position:absolute;width:135px;height:54px;left:-160px;top:72%;z-index:9;filter:drop-shadow(0 9px 7px #000)}
+.car.go{animation:race 4.5s cubic-bezier(.2,.7,.2,1) forwards}
+.body{position:absolute;left:22px;top:19px;width:94px;height:18px;background:linear-gradient(90deg,#5d0000,#e10600 55%,#f33);border-radius:55% 20% 30% 35%;transform:skewX(-15deg)}
+.nose{position:absolute;left:99px;top:27px;width:36px;height:5px;background:#ddd;border-radius:0 5px 5px 0}
+.frontwing{position:absolute;left:101px;top:22px;width:25px;height:5px;background:#aaa}
+.cockpit{position:absolute;left:58px;top:9px;width:31px;height:18px;border-radius:60% 60% 20% 20%;background:#050505;border:3px solid #555}
+.halo{position:absolute;left:55px;top:8px;width:38px;height:22px;border:3px solid #bbb;border-bottom:0;border-radius:50% 50% 0 0}
+.w{position:absolute;bottom:2px;width:24px;height:24px;border-radius:50%;background:#050505;border:4px solid #333}.w1{left:31px}.w2{left:92px}
+.glow{position:absolute;left:-120px;top:26px;width:120px;height:6px;background:linear-gradient(90deg,transparent,#e10600);filter:blur(4px)}
+@keyframes race{
+  0%{left:-160px;top:76%;transform:scale(.7)}
+  45%{left:28%;top:72%;transform:scale(.85)}
+  75%{left:62%;top:68%;transform:scale(1)}
+  100%{left:115%;top:64%;transform:scale(1.15)}
+}
+
+/* billboard */
+.board{
+  position:absolute;left:50%;right:auto;top:34%;
+  width:88%;max-width:390px;
+  transform:translateX(-50%) rotate(-1deg);
+  z-index:7;opacity:0;transition:.5s
+}
+.board.show{opacity:1}
+.panel{
+  background:linear-gradient(135deg,#111,#030303);
+  border:2px solid #e10600;
+  padding:15px 12px 13px;
+  box-shadow:0 0 30px #e1060040
+}
+.mini{font-size:9px;letter-spacing:.3em;color:#aaa}.panel{text-align:center}.panel h2{font-size:clamp(25px,7vw,40px);line-height:.95;margin:12px 0;text-transform:uppercase;font-style:italic}.panel h2 em{color:#e10600}.panel p{font-size:9px;letter-spacing:.32em;color:#777;margin:0}
+.post{width:5px;height:55px;background:#555;margin:auto}
+
+/* final party scene */
+.s3{
+  display:grid;place-items:center;
+  background:
+    radial-gradient(circle at 50% 40%,#3b0000 0,#110000 32%,#030303 72%);
+  text-align:center;overflow:hidden
+}
+.party-wrap{position:relative;width:100%;height:100%;display:grid;place-items:center}
+.party-word{
+  position:absolute;top:31%;width:100%;
+  font-size:clamp(48px,15vw,92px);font-weight:1000;
+  font-style:italic;letter-spacing:-.07em;
+  transform:rotate(-5deg);
+  text-shadow:0 0 25px #e1060066;
+  animation:partyPulse .7s ease-in-out infinite alternate
+}
+.party-word span{color:#e10600}
+.dancer{
+  position:absolute;top:50%;left:50%;
+  width:125px;height:145px;
+  transform:translate(-50%,-25%);
+  animation:dance .65s ease-in-out infinite alternate;
+}
+.face{
+  position:absolute;left:25px;top:0;
+  width:75px;height:75px;border-radius:50%;
+  background:#ffd83d;color:#241900;
+  border:4px solid #fff;
+  display:grid;place-items:center;
+  font-size:54px;font-family:Arial,sans-serif;
+  line-height:1;
+  box-shadow:0 0 30px #ffd83d55
+}
+.arm,.leg{
+  position:absolute;background:#ffd83d;border:4px solid #fff;
+  border-radius:20px;transform-origin:50% 10%;
+}
+.arm{width:13px;height:62px;top:69px}
+.arm.left{left:19px;transform:rotate(42deg);animation:armL .55s ease-in-out infinite alternate}
+.arm.right{right:19px;transform:rotate(-42deg);animation:armR .55s ease-in-out infinite alternate}
+.leg{width:14px;height:60px;top:112px}
+.leg.left{left:42px;transform:rotate(20deg);animation:legL .55s ease-in-out infinite alternate}
+.leg.right{right:42px;transform:rotate(-20deg);animation:legR .55s ease-in-out infinite alternate}
+.confetti{
+  position:absolute;bottom:19%;width:100%;
+  color:#e10600;font-size:20px;letter-spacing:.15em;
+  animation:float .9s ease-in-out infinite alternate
+}
+@keyframes partyPulse{from{transform:rotate(-5deg) scale(1)}to{transform:rotate(-5deg) scale(1.06)}}
+@keyframes dance{from{transform:translate(-50%,-25%) rotate(-5deg)}to{transform:translate(-50%,-25%) rotate(5deg)}}
+@keyframes armL{to{transform:rotate(-35deg)}}@keyframes armR{to{transform:rotate(35deg)}}
+@keyframes legL{to{transform:rotate(-18deg)}}@keyframes legR{to{transform:rotate(18deg)}}
+@keyframes float{to{transform:translateY(-10px) scale(1.08)}}
+
+/* countdown */
+.countScene{
+  position:absolute;left:0;right:0;bottom:3%;
+  z-index:10;text-align:center;opacity:0;
+  transform:translateY(15px);transition:.7s;
+  background:linear-gradient(transparent,rgba(0,0,0,.86) 18%);
+  padding:24px 10px 8px
+}
+.countScene.show{opacity:1;transform:none}
+.count{display:flex;justify-content:center;gap:9px;margin:14px 0}.box{min-width:58px;border-left:1px solid #333}.num{font-variant-numeric:tabular-nums;font-size:21px;font-weight:900}.unit{font-size:7px;color:#777;letter-spacing:.2em;margin-top:3px}
+.date2{font-size:25px;font-weight:900;letter-spacing:.2em;color:#e10600}.save{font-size:8px;letter-spacing:.4em;color:#777;margin-top:4px}
+</style>
+
+<style>
+.haptic-flash{
+  position:fixed;inset:0;z-index:40;pointer-events:none;
+  background:#fff;opacity:0;
+}
+.haptic-flash.pulse{animation:hapticPulse .16s ease-out}
+@keyframes hapticPulse{
+  0%{opacity:0}
+  25%{opacity:.16}
+  100%{opacity:0}
+}
+.app.haptic-shake{animation:hapticShake .12s linear}
+@keyframes hapticShake{
+  0%{transform:translate(0,0)}
+  20%{transform:translate(-2px,1px)}
+  40%{transform:translate(2px,-1px)}
+  60%{transform:translate(-2px,-1px)}
+  80%{transform:translate(2px,1px)}
+  100%{transform:translate(0,0)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="noise"></div><div class="haptic-flash" id="hapticFlash"></div>
+
+<section class="scene s1 active" id="scene1">
+  <div class="corner top"><span>CLASSIFIED</span><span>15.08</span></div>
+  <div>
+    <div class="eyebrow">A VERY IMPORTANT RACE</div>
+    <div class="big">LIGHTS<br><span>OUT.</span></div>
+    <div class="sub">SOMETHING SPECIAL IS COMING</div>
+    <button class="tap" id="enter">TAP TO START</button>
+  </div>
+  <div class="corner bottom"><span>NO SPOILERS</span><span>01 / 03</span></div>
+</section>
+
+<section class="scene s2" id="scene2">
+  <div class="hud"><span>RACE CONTROL <b>● LIVE</b></span><span>RADIO // CONNECTED</span></div>
+  <div class="startlights" id="lights">
+    <i class="light"></i><i class="light"></i><i class="light"></i><i class="light"></i><i class="light"></i>
+  </div>
+  <div class="s2title">READY?<br><span>YOU'RE ON THE GRID.</span></div>
+  <div class="trackwrap"><div class="track"></div></div>
+  <div class="car" id="car">
+    <div class="glow"></div><div class="body"></div><div class="halo"></div><div class="cockpit"></div>
+    <div class="frontwing"></div><div class="nose"></div><div class="w w1"></div><div class="w w2"></div>
+  </div>
+  <div class="board" id="board"><div class="panel">
+    <h2>MAU LICK 🏎️<br>YOUR BIRTHDAY<br><em>IS COMING!! 🎂</em></h2>
+  </div><div class="post"></div></div>
+  <div class="countScene" id="count">
+    <div class="date2">15 AUGUST</div><div class="save">THE BIG DAY IS APPROACHING</div>
+    <div class="count">
+      <div class="box"><div class="num" id="d">00</div><div class="unit">DAYS</div></div>
+      <div class="box"><div class="num" id="h">00</div><div class="unit">HOURS</div></div>
+      <div class="box"><div class="num" id="m">00</div><div class="unit">MIN</div></div>
+      <div class="box"><div class="num" id="s">00</div><div class="unit">SEC</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="scene s3" id="scene3">
+  <div class="party-wrap">
+    <div class="party-word">PARTYYYY<span>!!!</span></div>
+    <div class="dancer" aria-label="dancing happy face">
+      <div class="face">☺</div>
+      <div class="arm left"></div>
+      <div class="arm right"></div>
+      <div class="leg left"></div>
+      <div class="leg right"></div>
+    </div>
+    <div class="confetti">✦　✧　✦　✧　✦</div>
+  </div>
+</section>
+</div>
+
+<script>
+const $=x=>document.querySelector(x), $$=x=>document.querySelectorAll(x);
+const s1=$('#scene1'),s2=$('#scene2'),s3=$('#scene3'),car=$('#car'),board=$('#board'),count=$('#count');
+
+function show(a,b){a.classList.remove('active');b.classList.add('active')}
+function engine(){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext,ctx=new C(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='sawtooth';o.frequency.setValueAtTime(55,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(180,2.5);
+    g.gain.setValueAtTime(.001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.08,.12);g.gain.exponentialRampToValueAtTime(.001,2.7);
+    o.connect(g).connect(ctx.destination);o.start();o.stop(ctx.currentTime+2.8);
+  }catch(e){}
+}
+$('#enter').onclick=()=>{
+  show(s1,s2); engine();
+  const ls=$$('.light');
+  // Light sequence + vibration. iOS Safari does not expose navigator.vibrate,
+  // so the page gracefully skips vibration there.
+  ls.forEach((x,i)=>{
+    setTimeout(()=>{
+      x.classList.add('on');
+      hapticBeat();
+    },i*420);
+  });
+
+  // Lights stay ON while the car and billboard reveal happen.
+  setTimeout(()=>car.classList.add('go'),2600);
+  setTimeout(()=>board.classList.add('show'),3400);
+
+  // After the message is visible, turn the lights off together.
+  setTimeout(()=>{
+    ls.forEach(x=>x.classList.remove('on'));
+    hapticBeat(true);
+  },5200);
+  setTimeout(()=>count.classList.add('show'),4700);
+  setTimeout(()=>show(s2,s3),9000);
+};
+
+
+let audioCtx=null;
+function hapticBeat(finalBeat=false){
+  const app=document.querySelector('.app');
+  const flash=document.getElementById('hapticFlash');
+
+  flash.classList.remove('pulse');
+  void flash.offsetWidth;
+  flash.classList.add('pulse');
+
+  app.classList.remove('haptic-shake');
+  void app.offsetWidth;
+  app.classList.add('haptic-shake');
+
+  // A very short low-frequency click/buzz. It starts only after the
+  // user's tap, so Safari's audio policy allows it.
+  try{
+    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.type='sine';
+    o.frequency.value=finalBeat?72:58;
+    g.gain.setValueAtTime(.0001,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(finalBeat?.055:.035,audioCtx.currentTime+.008);
+    g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.085);
+    o.connect(g).connect(audioCtx.destination);
+    o.start();o.stop(audioCtx.currentTime+.09);
+  }catch(e){}
+}
+
+function nextBirthday(){
+  const n=new Date(); let y=n.getFullYear(),t=new Date(y,7,15,0,0,0);
+  if(t<=n)t=new Date(y+1,7,15,0,0,0); return t;
+}
+let target=nextBirthday();
+function tick(){
+  let x=Math.max(0,target-new Date());
+  $('#d').textContent=String(Math.floor(x/86400000)).padStart(2,'0');
+  $('#h').textContent=String(Math.floor(x/3600000)%24).padStart(2,'0');
+  $('#m').textContent=String(Math.floor(x/60000)%60).padStart(2,'0');
+  $('#s').textContent=String(Math.floor(x/1000)%60).padStart(2,'0');
+}
+tick();setInterval(tick,1000);
+</script>
+</body>
+</html>
+<style>
+@media (max-height:700px){
+  .startlights{top:10%}
+  .s2title{top:21%}
+  .board{top:30%;width:90%}
+  .board .panel h2{font-size:clamp(21px,6.2vw,32px)}
+  .trackwrap{height:44%}
+  .countScene{bottom:1%;padding-top:17px}
+}
+</style>
